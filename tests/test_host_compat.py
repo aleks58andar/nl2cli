@@ -128,6 +128,12 @@ class TestEnumFormattingIsPortable:
     def test_init_system_is_stored_as_a_plain_string(self, host_facts):
         assert type(host_facts.init_system) is str
 
+    def test_assignment_after_construction_is_coerced_too(self, host_facts):
+        """use_enum_values alone only covers parse time, not assignment."""
+        host_facts.init_system = InitSystem.sysv
+        assert type(host_facts.init_system) is str
+        assert f"{host_facts.init_system}" == "sysv"
+
     def test_it_still_compares_equal_to_the_enum(self, host_facts):
         assert host_facts.init_system == InitSystem.systemd
 
