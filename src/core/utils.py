@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from src.schema import HostFacts, InitSystem
+from src.core.schema import HostFacts, InitSystem
 
 
 def run_command(

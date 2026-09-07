@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.adaptive_planner import (
+from src.planning.adaptive_planner import (
     ToolAlternatives,
     adaptive_plan_generation,
     create_tool_installation_actions,
@@ -13,8 +13,8 @@ from src.adaptive_planner import (
     get_package_manager,
     substitute_alternatives_in_plan,
 )
-from src.planner import PlannerError
-from src.schema import HostFacts, InitSystem, Plan
+from src.planning.planner import PlannerError
+from src.core.schema import HostFacts, InitSystem, Plan
 
 from .conftest import edit, make_plan, restart, shell
 
@@ -181,9 +181,9 @@ class TestAdaptivePlanGeneration:
     @staticmethod
     def _patch_llm(plan: Plan):
         return patch(
-            "src.adaptive_planner.call_llm_with_lookups", return_value=plan
+            "src.planning.adaptive_planner.call_llm_with_lookups", return_value=plan
         ), patch(
-            "src.adaptive_planner.create_plan_generation_request",
+            "src.planning.adaptive_planner.create_plan_generation_request",
             return_value=([], [], False),
         )
 
@@ -200,7 +200,7 @@ class TestAdaptivePlanGeneration:
         regenerated = make_plan(shell("ls /etc"))
         llm, req = self._patch_llm(original)
         with llm, req, patch(
-            "src.adaptive_planner.regenerate_plan_with_alternatives",
+            "src.planning.adaptive_planner.regenerate_plan_with_alternatives",
             return_value=regenerated,
         ):
             out, messages = adaptive_plan_generation("do a thing", host_facts)
@@ -212,7 +212,7 @@ class TestAdaptivePlanGeneration:
         original = make_plan(shell("systemctl restart ssh"))
         llm, req = self._patch_llm(original)
         with llm, req, patch(
-            "src.adaptive_planner.regenerate_plan_with_alternatives", return_value=None
+            "src.planning.adaptive_planner.regenerate_plan_with_alternatives", return_value=None
         ):
             out, messages = adaptive_plan_generation("restart ssh", sysv_host_facts)
         assert out.actions[0].argv == ["service", "restart", "ssh"]
@@ -223,7 +223,7 @@ class TestAdaptivePlanGeneration:
         regenerated = make_plan(shell("curl https://example.com"))
         llm, req = self._patch_llm(original)
         with llm, req, patch(
-            "src.adaptive_planner.regenerate_plan_with_alternatives",
+            "src.planning.adaptive_planner.regenerate_plan_with_alternatives",
             return_value=regenerated,
         ):
             out, messages = adaptive_plan_generation(
@@ -236,7 +236,7 @@ class TestAdaptivePlanGeneration:
         original = make_plan(shell("curl https://example.com"))
         llm, req = self._patch_llm(original)
         with llm, req, patch(
-            "src.adaptive_planner.regenerate_plan_with_alternatives",
+            "src.planning.adaptive_planner.regenerate_plan_with_alternatives",
             return_value=make_plan(shell("ls")),
         ):
             out, messages = adaptive_plan_generation(
@@ -246,10 +246,10 @@ class TestAdaptivePlanGeneration:
 
     def test_llm_failure_raises_planner_error(self, host_facts):
         with patch(
-            "src.adaptive_planner.create_plan_generation_request",
+            "src.planning.adaptive_planner.create_plan_generation_request",
             return_value=([], [], False),
         ), patch(
-            "src.adaptive_planner.call_llm_with_lookups", side_effect=RuntimeError("boom")
+            "src.planning.adaptive_planner.call_llm_with_lookups", side_effect=RuntimeError("boom")
         ):
             with pytest.raises(PlannerError, match="Failed to generate initial plan"):
                 adaptive_plan_generation("do a thing", host_facts)

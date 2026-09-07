@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from src import audit, sysfs_prefs
+from src.storage import audit, sysfs_prefs
 
 
 @pytest.fixture

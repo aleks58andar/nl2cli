@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.text import Text
 
-from src.schema import Plan, EditFileAction, ShellAction, RestartServiceAction, HostFacts
+from src.core.schema import Plan, EditFileAction, ShellAction, RestartServiceAction, HostFacts
 
 
 def render_preview(plan: Plan, host_facts: HostFacts) -> str:

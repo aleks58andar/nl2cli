@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.schema import (
+from src.core.schema import (
     EditFileAction, ShellAction, RestartServiceAction, 
     Plan, HostFacts, InitSystem, EditMode
 )

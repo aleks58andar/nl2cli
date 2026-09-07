@@ -8,17 +8,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.executor.base import Result
-from src.executor.filesystem import EditFileRunner
-from src.executor.main import get_action_runner, run_plan
-from src.executor.services import UpstartServiceRunner, get_service_runner
-from src.executor.shell import (
+from src.execution.base import Result
+from src.execution.filesystem import EditFileRunner
+from src.execution.runner import get_action_runner, run_plan
+from src.execution.services import UpstartServiceRunner, get_service_runner
+from src.execution.shell import (
     ServiceRunner,
     ShellRunner,
     SysVServiceRunner,
     SystemctlRunner,
 )
-from src.schema import InitSystem
+from src.core.schema import InitSystem
 
 from .conftest import edit, make_plan, restart, shell
 
@@ -55,22 +55,22 @@ class TestGetServiceRunner:
         assert isinstance(runner, SysVServiceRunner)
 
     def test_upstart_prefers_the_service_command_when_present(self):
-        with patch("src.executor.services.which", return_value="/usr/sbin/service"):
+        with patch("src.execution.services.which", return_value="/usr/sbin/service"):
             runner = get_service_runner(restart("ssh"), InitSystem.upstart)
         assert isinstance(runner, ServiceRunner)
 
     def test_upstart_falls_back_to_initctl(self):
-        with patch("src.executor.services.which", return_value=None):
+        with patch("src.execution.services.which", return_value=None):
             runner = get_service_runner(restart("ssh"), InitSystem.upstart)
         assert isinstance(runner, UpstartServiceRunner)
 
     def test_unknown_init_system_prefers_service_then_systemctl(self):
-        with patch("src.executor.services.which", side_effect=lambda b: b == "systemctl"):
+        with patch("src.execution.services.which", side_effect=lambda b: b == "systemctl"):
             runner = get_service_runner(restart("ssh"), InitSystem.unknown)
         assert isinstance(runner, SystemctlRunner)
 
     def test_unknown_init_system_last_resort_is_sysv(self):
-        with patch("src.executor.services.which", return_value=None):
+        with patch("src.execution.services.which", return_value=None):
             runner = get_service_runner(restart("ssh"), InitSystem.unknown)
         assert isinstance(runner, SysVServiceRunner)
 
@@ -85,13 +85,13 @@ class TestUpstartServiceRunner:
         assert UpstartServiceRunner("ssh").requires_sudo is True
 
     def test_missing_initctl_fails_cleanly(self):
-        with patch("src.executor.services.which", return_value=None):
+        with patch("src.execution.services.which", return_value=None):
             result = UpstartServiceRunner("ssh").run()
         assert result.ok is False
         assert "initctl) is not available" in result.stderr
 
     def test_missing_configuration_fails_cleanly(self):
-        with patch("src.executor.services.which", return_value="/sbin/initctl"):
+        with patch("src.execution.services.which", return_value="/sbin/initctl"):
             result = UpstartServiceRunner("definitely-not-a-service").run()
         assert result.ok is False
         assert "configuration not found" in result.stderr
@@ -105,7 +105,7 @@ class TestUpstartServiceRunner:
 @pytest.fixture
 def no_sudo_prompt():
     """Stub SudoManager so no test can ever trigger a real sudo prompt."""
-    with patch("src.executor.main.SudoManager") as manager:
+    with patch("src.execution.runner.SudoManager") as manager:
         manager.return_value.authenticate_if_needed.return_value = True
         yield manager.return_value
 
@@ -124,7 +124,7 @@ class TestRunPlan:
     def test_every_action_runs_on_success(self, host_facts, no_sudo_prompt):
         plan = make_plan(shell("echo a"), shell("echo b"))
         runner = stub_runner(Result(ok=True), Result(ok=True))
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             results = run_plan(plan, host_facts)
 
         assert len(results) == 2
@@ -134,7 +134,7 @@ class TestRunPlan:
     def test_execution_stops_at_the_first_failure(self, host_facts, no_sudo_prompt):
         plan = make_plan(shell("echo a"), shell("echo b"), shell("echo c"))
         runner = stub_runner(Result(ok=False, error_code=1), Result(ok=True))
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             results = run_plan(plan, host_facts)
 
         assert len(results) == 1
@@ -142,14 +142,14 @@ class TestRunPlan:
 
     def test_duration_is_recorded_per_action(self, host_facts, no_sudo_prompt):
         runner = stub_runner(Result(ok=True))
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             results = run_plan(make_plan(shell("echo a")), host_facts)
         assert results[0].duration_ms is not None
         assert results[0].duration_ms >= 0
 
     def test_action_timeout_is_passed_to_the_runner(self, host_facts, no_sudo_prompt):
         runner = stub_runner(Result(ok=True))
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             run_plan(make_plan(shell("echo a")), host_facts, action_timeout=7)
         assert runner.run.call_args.kwargs["timeout"] == 7
 
@@ -158,7 +158,7 @@ class TestRunPlan:
     ):
         runner = MagicMock()
         runner.run.side_effect = RuntimeError("boom")
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             results = run_plan(make_plan(shell("echo a")), host_facts)
 
         assert results[0].ok is False
@@ -169,7 +169,7 @@ class TestRunPlan:
     ):
         runner = MagicMock()
         runner.run.side_effect = KeyboardInterrupt()
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             results = run_plan(make_plan(shell("echo a"), shell("echo b")), host_facts)
 
         assert len(results) == 1
@@ -181,7 +181,7 @@ class TestRunPlan:
 class TestRunPlanDryRun:
     def test_nothing_is_executed(self, host_facts, no_sudo_prompt):
         runner = stub_runner(Result(ok=True))
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             results = run_plan(make_plan(shell("echo a")), host_facts, dry_run=True)
 
         runner.run.assert_not_called()
@@ -190,7 +190,7 @@ class TestRunPlanDryRun:
         assert results[0].stdout == "Would execute: something"
 
     def test_dry_run_never_authenticates(self, host_facts, no_sudo_prompt):
-        with patch("src.executor.main.get_action_runner", return_value=stub_runner()):
+        with patch("src.execution.runner.get_action_runner", return_value=stub_runner()):
             run_plan(make_plan(shell("ls", sudo=True)), host_facts, dry_run=True)
         no_sudo_prompt.authenticate_if_needed.assert_not_called()
 
@@ -198,16 +198,16 @@ class TestRunPlanDryRun:
         plan = make_plan(shell("echo a"), shell("echo b"))
         runner = MagicMock()
         runner.dry_run_description.side_effect = ["one", "two"]
-        with patch("src.executor.main.get_action_runner", return_value=runner):
+        with patch("src.execution.runner.get_action_runner", return_value=runner):
             results = run_plan(plan, host_facts, dry_run=True)
         assert [r.stdout for r in results] == ["one", "two"]
 
 
 class TestRunPlanSudoGate:
     def test_failed_authentication_aborts_before_any_action(self, host_facts):
-        with patch("src.executor.main.SudoManager") as manager:
+        with patch("src.execution.runner.SudoManager") as manager:
             manager.return_value.authenticate_if_needed.return_value = False
-            with patch("src.executor.main.get_action_runner") as get_runner:
+            with patch("src.execution.runner.get_action_runner") as get_runner:
                 results = run_plan(make_plan(shell("ls", sudo=True)), host_facts)
 
         assert results == []
@@ -217,7 +217,7 @@ class TestRunPlanSudoGate:
         self, host_facts, no_sudo_prompt
     ):
         plan = make_plan(shell("ls", sudo=True), shell("echo a"))
-        with patch("src.executor.main.get_action_runner", return_value=stub_runner(
+        with patch("src.execution.runner.get_action_runner", return_value=stub_runner(
             Result(ok=True), Result(ok=True)
         )):
             run_plan(plan, host_facts)

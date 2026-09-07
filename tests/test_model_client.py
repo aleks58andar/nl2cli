@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.model_client import (
+from src.planning.model_client import (
     MAX_FALLBACK_ROUNDS,
     ModelClientError,
     OpenAIClient,
@@ -23,7 +23,7 @@ from src.model_client import (
     create_plan_generation_request,
     format_dict_for_prompt,
 )
-from src.schema import Plan
+from src.core.schema import Plan
 
 
 # --------------------------------------------------------------------------
@@ -53,7 +53,7 @@ PLAN_ARGS = {
 def client(monkeypatch):
     """An OpenAIClient whose transport is a mock, with a stub API key."""
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
-    with patch("src.model_client.OpenAI") as openai:
+    with patch("src.planning.model_client.OpenAI") as openai:
         instance = OpenAIClient(api_key="sk-test")
         instance.client = MagicMock()
         instance.create = instance.client.chat.completions.create
@@ -63,13 +63,13 @@ def client(monkeypatch):
 class TestClientConstruction:
     def test_missing_api_key_raises(self, monkeypatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        with patch("src.model_client.get_config") as get_config:
+        with patch("src.planning.model_client.get_config") as get_config:
             get_config.return_value.api_key = None
             with pytest.raises(ModelClientError, match="API key not found"):
                 OpenAIClient()
 
     def test_explicit_key_is_used(self):
-        with patch("src.model_client.OpenAI") as openai:
+        with patch("src.planning.model_client.OpenAI") as openai:
             OpenAIClient(api_key="sk-explicit")
         assert openai.call_args.kwargs["api_key"] == "sk-explicit"
 

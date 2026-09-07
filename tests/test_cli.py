@@ -11,8 +11,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src import cli
-from src.executor.base import Result
-from src.schema import ValidationIssue
+from src.execution.base import Result
+from src.core.schema import ValidationIssue
 
 from .conftest import make_plan, shell
 
@@ -189,7 +189,7 @@ class TestRunFlow:
         wired.run_plan.assert_not_called()
 
     def test_non_adaptive_mode_uses_the_plain_planner(self, wired):
-        with patch("src.planner.make_plan", return_value=wired.plan) as make, patch(
+        with patch("src.planning.planner.make_plan", return_value=wired.plan) as make, patch(
             "src.cli.Confirm.ask", return_value=True
         ):
             run_cli(adaptive=False)

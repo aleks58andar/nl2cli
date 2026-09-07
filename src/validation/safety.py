@@ -4,8 +4,8 @@ import re
 import shlex
 from pathlib import Path
 
-from src.config import get_config
-from src.schema import Action, Plan, ShellAction, EditFileAction, RestartServiceAction
+from src.core.config import get_config
+from src.core.schema import Action, Plan, ShellAction, EditFileAction, RestartServiceAction
 
 
 class SafetyError(Exception):
@@ -16,7 +16,7 @@ class SafetyChecker:
     """Performs safety checks on commands and plans."""
     
     def __init__(self) -> None:
-        from src.config import get_default_safety_config
+        from src.core.config import get_default_safety_config
         try:
             self.config = get_config().safety
             # If config has no patterns, use defaults

@@ -7,9 +7,9 @@ import subprocess
 
 from rich.console import Console
 
-from src.schema import ShellAction
-from src.utils import run_command
-from src.executor.base import ActionRunner, Result
+from src.core.schema import ShellAction
+from src.core.utils import run_command
+from src.execution.base import ActionRunner, Result
 
 console = Console()
 

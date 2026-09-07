@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.safety import SafetyChecker, is_command_safe, get_dangerous_command_reason
-from src.schema import ShellAction, EditFileAction, EditMode
+from src.validation.safety import SafetyChecker, is_command_safe, get_dangerous_command_reason
+from src.core.schema import ShellAction, EditFileAction, EditMode
 
 
 def test_safety_checker_init():

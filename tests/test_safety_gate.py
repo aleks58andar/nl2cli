@@ -16,10 +16,10 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from src.schema import ShellAction, EditFileAction, EditMode, Plan, ActionType
-from src.risk import compute_risk_score, needs_confirmation
-from src.validators import _validate_shell_action
-from src.schema import HostFacts, InitSystem
+from src.core.schema import ShellAction, EditFileAction, EditMode, Plan, ActionType
+from src.validation.risk import compute_risk_score, needs_confirmation
+from src.validation.validators import _validate_shell_action
+from src.core.schema import HostFacts, InitSystem
 
 
 # ======================================================================
@@ -259,7 +259,7 @@ class TestTimeout:
 
     def test_timeout_returns_error(self):
         action = ShellAction(description="slow", command="sleep 60")
-        from src.executor.shell import ShellRunner
+        from src.execution.shell import ShellRunner
 
         def _fake_run(argv, **kwargs):
             raise subprocess.TimeoutExpired(cmd=argv, timeout=kwargs.get("timeout", 1))
@@ -281,14 +281,14 @@ class TestNoShellTrue:
     """Verify that no execution path uses shell=True."""
 
     def test_run_command_uses_argv(self):
-        from src.utils import run_command
+        from src.core.utils import run_command
 
         result = run_command(["echo", "hello"], timeout=5)
         assert result.returncode == 0
         assert "hello" in result.stdout
 
     def test_sudo_manager_uses_argv(self):
-        from src.sudo_manager import SudoManager
+        from src.execution.sudo_manager import SudoManager
         import inspect
 
         src = inspect.getsource(SudoManager.run_sudo_command)

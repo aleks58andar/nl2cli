@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.schema import (
+from src.core.schema import (
     ActionType,
     EditFileAction,
     EditMode,

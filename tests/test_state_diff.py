@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.state_diff import (
+from src.core.state_diff import (
     _read,
     _scan_dir,
     diff_snapshots,
@@ -31,7 +31,7 @@ class TestReadHelper:
 
 class TestScanDir:
     def test_missing_class_dir_yields_empty(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("src.state_diff._SYS_CLASS", tmp_path)
+        monkeypatch.setattr("src.core.state_diff._SYS_CLASS", tmp_path)
         assert _scan_dir("leds", ("brightness",)) == {}
 
     def test_collects_requested_attributes(self, tmp_path, monkeypatch):
@@ -39,7 +39,7 @@ class TestScanDir:
         device.mkdir(parents=True)
         (device / "brightness").write_text("2\n")
         (device / "max_brightness").write_text("3\n")
-        monkeypatch.setattr("src.state_diff._SYS_CLASS", tmp_path)
+        monkeypatch.setattr("src.core.state_diff._SYS_CLASS", tmp_path)
 
         assert _scan_dir("leds", ("brightness", "max_brightness")) == {
             "leds/kbd_backlight": {"brightness": "2", "max_brightness": "3"}
@@ -47,14 +47,14 @@ class TestScanDir:
 
     def test_devices_without_the_attributes_are_omitted(self, tmp_path, monkeypatch):
         (tmp_path / "leds" / "boring").mkdir(parents=True)
-        monkeypatch.setattr("src.state_diff._SYS_CLASS", tmp_path)
+        monkeypatch.setattr("src.core.state_diff._SYS_CLASS", tmp_path)
         assert _scan_dir("leds", ("brightness",)) == {}
 
     def test_absent_attributes_are_simply_missing(self, tmp_path, monkeypatch):
         device = tmp_path / "leds" / "kbd"
         device.mkdir(parents=True)
         (device / "brightness").write_text("1\n")
-        monkeypatch.setattr("src.state_diff._SYS_CLASS", tmp_path)
+        monkeypatch.setattr("src.core.state_diff._SYS_CLASS", tmp_path)
         assert _scan_dir("leds", ("brightness", "max_brightness")) == {
             "leds/kbd": {"brightness": "1"}
         }
@@ -70,13 +70,13 @@ class TestTakeSnapshot:
             device = tmp_path / subdir / "dev0"
             device.mkdir(parents=True)
             (device / attr).write_text(f"{value}\n")
-        monkeypatch.setattr("src.state_diff._SYS_CLASS", tmp_path)
+        monkeypatch.setattr("src.core.state_diff._SYS_CLASS", tmp_path)
 
         snapshot = take_snapshot()
         assert set(snapshot) == {"leds/dev0", "backlight/dev0", "power_supply/dev0"}
 
     def test_empty_system_yields_an_empty_snapshot(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("src.state_diff._SYS_CLASS", tmp_path)
+        monkeypatch.setattr("src.core.state_diff._SYS_CLASS", tmp_path)
         assert take_snapshot() == {}
 
 

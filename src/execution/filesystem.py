@@ -6,9 +6,9 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from src.schema import EditFileAction, EditMode
-from src.utils import ensure_backup_dir
-from src.executor.base import ActionRunner, Result
+from src.core.schema import EditFileAction, EditMode
+from src.core.utils import ensure_backup_dir
+from src.execution.base import ActionRunner, Result
 
 
 class EditFileRunner(ActionRunner):

@@ -2,10 +2,10 @@
 
 import logging
 
-from src.model_client import create_plan_generation_request, call_llm_structured, call_llm_with_lookups
-from src.planner import PlannerError
-from src.schema import Plan, HostFacts, ShellAction, ActionType
-from src.utils import which
+from src.planning.model_client import create_plan_generation_request, call_llm_structured, call_llm_with_lookups
+from src.planning.planner import PlannerError
+from src.core.schema import Plan, HostFacts, ShellAction, ActionType
+from src.core.utils import which
 
 
 logger = logging.getLogger(__name__)

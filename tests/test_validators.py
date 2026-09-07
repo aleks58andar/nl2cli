@@ -6,8 +6,8 @@ validation layer so it can be moved between modules without drift.
 
 import pytest
 
-from src.schema import EditMode, InitSystem, Plan, ValidationIssue
-from src.validators import (
+from src.core.schema import EditMode, InitSystem, Plan, ValidationIssue
+from src.validation.validators import (
     _validate_edit_file_action,
     _validate_plan_structure,
     _validate_shell_action,

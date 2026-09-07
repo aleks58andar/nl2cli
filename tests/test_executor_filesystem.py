@@ -9,9 +9,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.executor.base import Result
-from src.executor.filesystem import EditFileRunner
-from src.schema import EditFileAction, EditMode
+from src.execution.base import Result
+from src.execution.filesystem import EditFileRunner
+from src.core.schema import EditFileAction, EditMode
 
 from .conftest import edit
 
@@ -21,7 +21,7 @@ def backup_dir(tmp_path, monkeypatch) -> Path:
     """Redirect the backup directory away from $HOME."""
     path = tmp_path / "backups"
     path.mkdir()
-    monkeypatch.setattr("src.executor.filesystem.ensure_backup_dir", lambda: path)
+    monkeypatch.setattr("src.execution.filesystem.ensure_backup_dir", lambda: path)
     return path
 
 

@@ -3,7 +3,7 @@
 import pytest
 
 from src.renderer import create_script_preview, render_preview, render_rich_preview
-from src.schema import EditMode, InitSystem
+from src.core.schema import EditMode, InitSystem
 
 from .conftest import edit, make_plan, restart, shell
 

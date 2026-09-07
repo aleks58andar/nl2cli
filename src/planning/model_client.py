@@ -15,8 +15,8 @@ from typing import Any, Type, TypeVar
 from openai import OpenAI
 from pydantic import BaseModel
 
-from src.config import get_config
-from src.schema import Plan, HostFacts
+from src.core.config import get_config
+from src.core.schema import Plan, HostFacts
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -904,7 +904,7 @@ def replan_after_failure(
     Sends the original request, the failed plan's actions with their errors,
     and asks for a new plan that avoids the same mistakes.
     """
-    from src.schema import Plan  # avoid circular at module level
+    from src.core.schema import Plan  # avoid circular at module level
 
     failure_report = []
     for i, action in enumerate(failed_plan.actions, 1):

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from src.schema import Plan, ShellAction, EditFileAction
+from src.core.schema import Plan, ShellAction, EditFileAction
 
 _DELETE_BINARIES = frozenset({"rm", "rmdir", "shred", "unlink"})
 

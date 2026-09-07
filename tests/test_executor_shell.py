@@ -9,14 +9,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.executor.base import ActionRunner, ExecutionError, Result
-from src.executor.shell import (
+from src.execution.base import ActionRunner, ExecutionError, Result
+from src.execution.shell import (
     ServiceRunner,
     ShellRunner,
     SysVServiceRunner,
     SystemctlRunner,
 )
-from src.schema import ShellAction
+from src.core.schema import ShellAction
 
 from .conftest import shell
 
@@ -202,7 +202,7 @@ class TestSystemctlRunner:
         assert runner.requires_sudo is True
 
     def test_missing_systemd_fails_cleanly(self):
-        with patch("src.executor.shell.run_command") as run_command:
+        with patch("src.execution.shell.run_command") as run_command:
             run_command.return_value = subprocess.CompletedProcess(
                 args=[], returncode=1, stdout="", stderr=""
             )
@@ -215,7 +215,7 @@ class TestSystemctlRunner:
             code = 0 if argv[:2] == ["systemctl", "--version"] else 1
             return subprocess.CompletedProcess(args=argv, returncode=code, stdout="")
 
-        with patch("src.executor.shell.run_command", side_effect=fake):
+        with patch("src.execution.shell.run_command", side_effect=fake):
             result = SystemctlRunner("nope").run()
         assert result.ok is False
         assert "not found" in result.stderr
@@ -232,7 +232,7 @@ class TestSystemctlRunner:
             )
 
         runner = SystemctlRunner("ssh")
-        with patch("src.executor.shell.run_command", side_effect=fake), patch(
+        with patch("src.execution.shell.run_command", side_effect=fake), patch(
             "subprocess.run"
         ) as run:
             run.return_value = subprocess.CompletedProcess(

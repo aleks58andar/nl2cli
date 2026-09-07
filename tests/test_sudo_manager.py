@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.sudo_manager import SudoManager
+from src.execution.sudo_manager import SudoManager
 
 from .conftest import edit, shell
 

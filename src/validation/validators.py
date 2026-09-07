@@ -2,9 +2,12 @@
 
 from pathlib import Path
 
-from src.planner import validate_plan_against_host, enhance_plan_with_context
-from src.safety import get_safety_checker
-from src.schema import Plan, HostFacts, ValidationIssue, EditFileAction, ShellAction
+from src.validation.host_compat import (
+    enhance_plan_with_context,
+    validate_plan_against_host,
+)
+from src.validation.safety import get_safety_checker
+from src.core.schema import Plan, HostFacts, ValidationIssue, EditFileAction, ShellAction
 
 
 def validate_plan(plan: Plan, host_facts: HostFacts) -> list[ValidationIssue]:
@@ -210,7 +213,7 @@ def _validate_shell_action(
 
     # --- shell glue check (configurable) ---
     try:
-        from src.config import get_config
+        from src.core.config import get_config
         allow_glue = get_config().safety.allow_shell_glue
     except Exception:
         allow_glue = False

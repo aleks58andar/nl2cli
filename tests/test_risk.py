@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.risk import compute_risk_score, needs_confirmation, one_line_summary
+from src.validation.risk import compute_risk_score, needs_confirmation, one_line_summary
 
 from .conftest import edit, make_plan, restart, shell
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src import config as config_module
-from src.config import (
+from src.core import config as config_module
+from src.core.config import (
     AppConfig,
     ModelConfig,
     SafetyConfig,

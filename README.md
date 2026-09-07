@@ -69,36 +69,59 @@ Pipes are the single deliberate exception: allowed only when the action needs no
 
 ## Architecture
 
+Five layers, with a dependency direction that is enforced by a test
+(`tests/test_public_api.py::TestLayering`): `core` is the bottom and imports
+nothing else; `planning`, `validation`, `execution` and `storage` may use
+`core` but never each other; the CLI sits on top.
+
 ```
 src/
-├── schema.py            # Plan, ShellAction, EditFileAction, HostFacts
-├── model_client.py      # OpenAI client, tool-calling loop, context pre-fetch
-├── planner.py           # Plan generation
-├── adaptive_planner.py  # Missing-tool detection, substitution, install actions
-├── validators.py        # Multi-layer plan validation
-├── safety.py            # Dangerous-pattern matching, critical-file protection
-├── risk.py              # Risk scoring and confirmation policy
-├── utils.py             # Host fact gathering
-├── sudo_manager.py      # Sudo auth + background session keepalive
-├── state_diff.py        # Before/after sysfs + service snapshots
-├── sysfs_prefs.py       # Persistent desired-value store for hardware controls
-├── audit.py             # JSONL audit log
-├── config.py            # TOML + env config
-├── renderer.py          # Rich plan rendering
-└── executor/
-    ├── shell.py         # argv execution
-    ├── filesystem.py    # File edits, backups, sysfs writes
-    └── services.py      # systemd / sysv / upstart
+├── cli.py                   # argv parsing, orchestration, exit codes
+├── renderer.py              # Rich plan preview and script export
+│
+├── core/                    # domain types + host facts (imports no other layer)
+│   ├── schema.py            # Plan, ShellAction, EditFileAction, HostFacts
+│   ├── config.py            # TOML + env config
+│   ├── utils.py             # host fact gathering
+│   └── state_diff.py        # before/after sysfs + service snapshots
+│
+├── planning/                # the only layer that talks to the LLM
+│   ├── planner.py           # plan generation
+│   ├── adaptive_planner.py  # missing-tool detection, substitution, installs
+│   └── model_client.py      # OpenAI client, tool-calling loop, pre-fetch
+│
+├── validation/              # may this plan run? does it need confirmation?
+│   ├── validators.py        # multi-layer plan validation
+│   ├── host_compat.py       # init system, binaries, paths; plan enrichment
+│   ├── safety.py            # dangerous patterns, critical-file protection
+│   └── risk.py              # risk scoring and confirmation policy
+│
+├── execution/               # runs a validated plan
+│   ├── runner.py            # per-action orchestration, timeouts, cancellation
+│   ├── base.py              # ActionRunner ABC, Result
+│   ├── shell.py             # argv execution
+│   ├── filesystem.py        # file edits, backups, sysfs writes
+│   ├── services.py          # systemd / sysv / upstart
+│   └── sudo_manager.py      # sudo auth + background session keepalive
+│
+└── storage/                 # what persists between runs
+    ├── audit.py             # JSONL audit log
+    └── sysfs_prefs.py       # desired hardware values
 ```
 
 ## Testing
 
 ```bash
 pip install -e ".[dev]"
-pytest    # 54 tests
+pytest              # 580 tests
+pytest --cov=src    # 83% coverage
 ```
 
-Coverage is deliberately weighted toward the safety boundary — schema rejection, dangerous patterns, and the confirmation gate — rather than toward LLM behaviour, which is not deterministic enough to assert on.
+Coverage is weighted toward the safety boundary — schema rejection, dangerous
+patterns, the confirmation gate — rather than toward LLM behaviour, which is
+not deterministic enough to assert on. The OpenAI transport is mocked
+throughout; no test performs network I/O, invokes sudo, or writes outside a
+temporary directory.
 
 ---
 
