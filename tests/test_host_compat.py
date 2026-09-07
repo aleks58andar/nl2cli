@@ -115,3 +115,26 @@ class TestEnhancePlanWithContext:
     def test_enhancement_is_in_place(self, host_facts):
         plan = build_plan(shell("ls"))
         assert enhance_plan_with_context(plan, host_facts) is plan
+
+
+class TestEnumFormattingIsPortable:
+    """Python 3.11 changed how `str, Enum` members format in f-strings.
+
+    Before HostFacts normalised its enums, `f"{host_facts.init_system}"`
+    produced "systemd" on 3.10 and "InitSystem.systemd" on 3.11+ — which
+    reached both user-facing messages and the LLM prompt.
+    """
+
+    def test_init_system_is_stored_as_a_plain_string(self, host_facts):
+        assert type(host_facts.init_system) is str
+
+    def test_it_still_compares_equal_to_the_enum(self, host_facts):
+        assert host_facts.init_system == InitSystem.systemd
+
+    def test_it_interpolates_without_the_class_name(self, host_facts):
+        assert f"{host_facts.init_system}" == "systemd"
+
+    def test_the_mismatch_message_names_the_bare_init_systems(self, sysv_host_facts):
+        plan = build_plan(shell("ls"), init_system=InitSystem.systemd)
+        _, issues = validate_plan_against_host(plan, sysv_host_facts)
+        assert issues == ["Plan expects systemd but host uses sysv"]

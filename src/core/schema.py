@@ -171,3 +171,9 @@ class HostFacts(BaseModel):
 
     # Package manager available on this system
     package_manager: str | None = None
+
+    # Store enums as their string values, like Plan does. Without this,
+    # init_system interpolates as "InitSystem.systemd" on Python 3.11+
+    # (3.11 changed __format__ for mixin enums) — which leaks into the
+    # LLM prompt and into user-facing messages.
+    model_config = {"use_enum_values": True}
