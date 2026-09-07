@@ -22,10 +22,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "typer[all]>=0.9.0",
     "pydantic>=2.0.0",
     "rich>=13.0.0",
-    "httpx>=0.24.0",
     "openai>=1.0.0",
     "tomli>=1.2.0; python_version<'3.11'",
 ]
@@ -44,6 +42,9 @@ nl2cli = "src.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.black]
 line-length = 88

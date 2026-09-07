@@ -4,12 +4,12 @@ import time
 
 from rich.console import Console
 
-from src.schema import Plan, HostFacts, Action, EditFileAction, ShellAction, RestartServiceAction
-from src.executor.base import ActionRunner, Result
-from src.executor.filesystem import EditFileRunner
-from src.executor.shell import ShellRunner
-from src.executor.services import get_service_runner
-from src.sudo_manager import SudoManager
+from src.core.schema import Plan, HostFacts, Action, EditFileAction, ShellAction, RestartServiceAction
+from src.execution.base import ActionRunner, Result
+from src.execution.filesystem import EditFileRunner
+from src.execution.shell import ShellRunner
+from src.execution.services import get_service_runner
+from src.execution.sudo_manager import SudoManager
 
 console = Console(stderr=True)
 stdout_console = Console()

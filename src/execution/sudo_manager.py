@@ -127,40 +127,6 @@ class SudoManager:
             self._keepalive_timer = None
 
     def _check_sudo_valid(self) -> bool:
-        try:
-            proc = subprocess.run(
-                ["sudo", "-n", "true"],
-                capture_output=True, text=True, timeout=5,
-            )
-            return proc.returncode == 0
-        except Exception:
-            return False
-
-    def _test_sudo_password(self, password: str) -> bool:
-        try:
-            proc = subprocess.Popen(
-                ["sudo", "-S", "true"],
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, text=True,
-            )
-            proc.communicate(input=password + "\n", timeout=10)
-            return proc.returncode == 0
-        except Exception:
-            return False
-
-    def run_sudo_command(self, argv: list[str], timeout: int = 30, input: str | None = None) -> subprocess.CompletedProcess:
-        """Run a command with sudo. *argv* must NOT contain 'sudo'."""
-        return subprocess.run(
-            ["sudo"] + argv,
-            capture_output=True, text=True, timeout=timeout,
-            input=input,
-        )
-
-    @property
-    def is_authenticated(self) -> bool:
-        return self._authenticated
-    
-    def _check_sudo_valid(self) -> bool:
         """Check if current sudo timestamp is valid."""
         try:
             proc = subprocess.run(

@@ -3,11 +3,11 @@
 import pytest
 from unittest.mock import patch, mock_open
 
-from src.utils import (
+from src.core.utils import (
     which, detect_init_system, detect_distro, 
     gather_host_facts, format_dict_for_prompt
 )
-from src.schema import InitSystem
+from src.core.schema import InitSystem
 
 
 def test_which():
@@ -21,7 +21,7 @@ def test_which():
     assert result is None
 
 
-@patch('src.utils.which')
+@patch('src.core.utils.which')
 @patch('pathlib.Path.exists')
 def test_detect_init_system(mock_exists, mock_which):
     """Test init system detection."""
@@ -65,10 +65,10 @@ def test_format_dict_for_prompt():
     assert "key3: (none)" in result
 
 
-@patch('src.utils.detect_distro')
-@patch('src.utils.detect_init_system')
-@patch('src.utils.check_binary_availability')
-@patch('src.utils.check_file_existence')
+@patch('src.core.utils.detect_distro')
+@patch('src.core.utils.detect_init_system')
+@patch('src.core.utils.check_binary_availability')
+@patch('src.core.utils.check_file_existence')
 def test_gather_host_facts(mock_files, mock_binaries, mock_init, mock_distro):
     """Test host facts gathering."""
     mock_distro.return_value = ("ubuntu", "22.04")

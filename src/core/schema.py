@@ -139,7 +139,7 @@ class Plan(BaseModel):
     actions: list[Action] = Field(default_factory=list)
     notes: str | None = None
 
-    model_config = {"use_enum_values": True}
+    model_config = {"use_enum_values": True, "validate_assignment": True}
 
 
 class ValidationIssue(BaseModel):
@@ -171,3 +171,10 @@ class HostFacts(BaseModel):
 
     # Package manager available on this system
     package_manager: str | None = None
+
+    # Store enums as their string values, like Plan does. Without this,
+    # init_system interpolates as "InitSystem.systemd" on Python 3.11+
+    # (3.11 changed __format__ for mixin enums) — which leaks into the
+    # LLM prompt and into user-facing messages. validate_assignment keeps
+    # that true for fields set after construction, not just at parse time.
+    model_config = {"use_enum_values": True, "validate_assignment": True}

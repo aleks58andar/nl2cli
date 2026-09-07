@@ -1,41 +1,17 @@
-"""Natural language to structured plan conversion."""
+"""Host compatibility checks and plan enrichment.
 
+Answers "can this plan run on *this* machine?" — init system, required
+binaries, parent directories — and fills in host details the LLM left blank.
 
-from src.model_client import (
-    create_plan_generation_request,
-    call_llm_with_lookups,
-    call_llm_structured,
-)
-from src.schema import Plan, HostFacts
+Lived in the planner originally, which inverted the layering: validation
+imported from planning to reach it. It belongs here.
+"""
 
+import os
 
-class PlannerError(Exception):
-    """Raised when plan generation fails."""
+from src.core.schema import HostFacts, Plan
 
-
-def make_plan(nl_request: str, host_facts: HostFacts) -> Plan:
-    """Convert a natural language request into a structured plan.
-
-    Uses the multi-turn loop so the LLM can call lookup tools (get_tool_usage,
-    check_path, get_service_info) before emitting the plan.
-    """
-    try:
-        messages, tools, has_prefetch = create_plan_generation_request(nl_request, host_facts)
-
-        plan = call_llm_with_lookups(
-            messages=messages,
-            tools=tools,
-            host_facts=host_facts,
-            result_model=Plan,
-            has_prefetch=has_prefetch,
-        )
-
-        plan.init_system = host_facts.init_system
-        plan.distro_hint = f"{host_facts.distro_id} {host_facts.distro_version}"
-        return plan
-
-    except Exception as e:
-        raise PlannerError(f"Failed to generate plan: {e}") from e
+_VIRTUAL_FS_PREFIXES = ("/sys/", "/proc/", "/dev/")
 
 
 def validate_plan_against_host(plan: Plan, host_facts: HostFacts) -> tuple[bool, list[str]]:
@@ -76,14 +52,12 @@ def validate_plan_against_host(plan: Plan, host_facts: HostFacts) -> tuple[bool,
             issues.append(f"Required binary '{binary}' not found on system")
     
     # Check for file dependencies
-    _VIRTUAL_FS_PREFIXES = ("/sys/", "/proc/", "/dev/")
     for action in plan.actions:
         if action.type == "edit_file":
             file_path = action.path
             # Virtual filesystems always exist — skip the parent-dir check
             if any(file_path.startswith(p) for p in _VIRTUAL_FS_PREFIXES):
                 continue
-            import os
             parent_dir = os.path.dirname(file_path)
             if parent_dir:
                 if parent_dir in host_facts.existing_files:

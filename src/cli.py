@@ -5,14 +5,14 @@ import sys
 from rich.console import Console
 from rich.prompt import Confirm
 
-from src.config import get_config
-from src.executor import run_plan
-from src.adaptive_planner import adaptive_plan_generation
+from src.core.config import get_config
+from src.execution import run_plan
+from src.planning.adaptive_planner import adaptive_plan_generation
 from src.renderer import render_rich_preview
-from src.utils import gather_host_facts
-from src.validators import enhance_and_validate_plan, has_critical_issues, format_validation_issues
-from src.risk import needs_confirmation, one_line_summary, compute_risk_score
-from src.audit import write_audit_entry, format_action_result
+from src.core.utils import gather_host_facts
+from src.validation.validators import enhance_and_validate_plan, has_critical_issues, format_validation_issues
+from src.validation.risk import needs_confirmation, one_line_summary, compute_risk_score
+from src.storage.audit import write_audit_entry, format_action_result
 
 console = Console()
 
@@ -180,7 +180,7 @@ def _run(
             for msg in adaptation_messages:
                 console.print(f"[blue]{msg}[/blue]")
     else:
-        from src.planner import make_plan
+        from src.planning.planner import make_plan
         plan = make_plan(request, host_facts)
 
     # ---- validate ----

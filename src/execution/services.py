@@ -3,10 +3,10 @@
 import subprocess
 from pathlib import Path
 
-from src.schema import InitSystem, RestartServiceAction, ShellAction
-from src.utils import which, run_command
-from src.executor.base import ActionRunner, Result
-from src.executor.shell import SystemctlRunner, SysVServiceRunner, ServiceRunner
+from src.core.schema import InitSystem, RestartServiceAction, ShellAction
+from src.core.utils import which, run_command
+from src.execution.base import ActionRunner, Result
+from src.execution.shell import SystemctlRunner, SysVServiceRunner, ServiceRunner
 
 
 def get_service_runner(action: RestartServiceAction, init_system: InitSystem) -> ActionRunner:
