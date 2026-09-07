@@ -113,7 +113,7 @@ src/
 
 ```bash
 pip install -e ".[dev]"
-pytest              # 580 tests
+pytest              # 584 tests
 pytest --cov=src    # 83% coverage
 ```
 
